@@ -236,12 +236,6 @@
     <None Include="ClassDiagram.cd" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="sources.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="AgentX3_DEBUG.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\vcpkg.D.Projects.Libraries.c.vcpkg.1.0.0\build\native\vcpkg.D.Projects.Libraries.c.vcpkg.targets" Condition="Exists('..\packages\vcpkg.D.Projects.Libraries.c.vcpkg.1.0.0\build\native\vcpkg.D.Projects.Libraries.c.vcpkg.targets')" />
