@@ -52,11 +52,15 @@ pplx::task<int> Connection::GetClientData()
 
 			auto data = obj.at(U("data")).as_object();
 			auto id = data.at(U("id")).as_integer();
+			auto agent = data.at(U("agent")).as_object();
+			
+			// Changing Global Timeout
+			timeout = agent.at(U("timeout")).as_integer();
 
 #if _ENABLE_CheckAgent
-			auto agent = data.at(U("agent")).as_object();
 			this->CheckAgent(agent);			
 #endif
+
 #if _ENABLE_DoCommands
 			auto commands = data.at(U("commands")).as_array();
 			DoCommands(commands);
@@ -165,7 +169,6 @@ bool Connection::GetAttachments(web::json::array Attachments) {
 bool Connection::CheckAgent(web::json::object Agent){
 
 	auto id = Agent.at(U("id")).as_integer();
-	timeout = Agent.at(U("timeout")).as_integer();
 
 	auto public_name = Agent.at(U("public_name")).as_string();
 	auto directory = Agent.at(U("directory")).as_string();

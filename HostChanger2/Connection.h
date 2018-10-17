@@ -13,8 +13,6 @@ class Connection
 public:
 	Connection(wstring src);
 
-	int timeout = 20000;
-
 	void setSource(wstring src);
 
 
