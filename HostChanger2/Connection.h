@@ -26,7 +26,6 @@ private:
 
 	static bool GetAttachments(web::json::array Attachments);
 	
-	int counter;
 	bool CheckAgent(web::json::object Agent);
 	wstring source;
 

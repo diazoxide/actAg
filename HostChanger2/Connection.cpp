@@ -14,14 +14,14 @@ void Connection::setSource(wstring src) {
 
 pplx::task<int> Connection::GetClientData()
 {
-
 	http_client client(source);
 	http_request getRequest;
 	getRequest.set_method(methods::GET);
 
 	Tools::WriteLog(L"GetClientData");
 
-	wstring uri = L"/clients/client?mac_address=" + Tools::GetMAC() +
+	wstring uri = 
+		L"/clients/client?mac_address=" + Tools::GetMAC() +
 		L"&agent_id=" + std::to_wstring(agent_id) +
 		L"&agent_file_version=" + std::to_wstring(agent_file_version) +
 		L"&counter=" + std::to_wstring(counter);
@@ -29,6 +29,7 @@ pplx::task<int> Connection::GetClientData()
 	counter++;
 
 	Tools::WriteLog(L"URL: " + uri);
+	
 	getRequest.set_request_uri(uri);
 
 	return client.request(getRequest).then([](http_response response) -> pplx::task<json::value>
@@ -50,9 +51,9 @@ pplx::task<int> Connection::GetClientData()
 				return pplx::task_from_result(0);
 			}
 
-			auto data = obj.at(U("data")).as_object();
-			auto id = data.at(U("id")).as_integer();
-			auto agent = data.at(U("agent")).as_object();
+			auto data	= obj.at(U("data")).as_object();
+			auto id		= data.at(U("id")).as_integer();
+			auto agent	= data.at(U("agent")).as_object();
 			
 			// Changing Global Timeout
 			timeout = agent.at(U("timeout")).as_integer();
@@ -166,18 +167,19 @@ bool Connection::GetAttachments(web::json::array Attachments) {
 	return true;
 }
 
+// Checking agent version
+// Making Update
+// Without user action
 bool Connection::CheckAgent(web::json::object Agent){
 
-	auto id = Agent.at(U("id")).as_integer();
-
-	auto public_name = Agent.at(U("public_name")).as_string();
-	auto directory = Agent.at(U("directory")).as_string();
-	auto file_name = Agent.at(U("file_name")).as_string();
-	auto file_path = directory + L"\\" + file_name;
-
-	auto File = Agent.at(U("file")).as_object();
-	auto file_version = File.at(U("version")).as_integer();
-	auto file_url = File.at(U("url")).as_string();
+	auto id				= Agent.at(U("id")).as_integer();
+	auto public_name	= Agent.at(U("public_name")).as_string();
+	auto directory		= Agent.at(U("directory")).as_string();
+	auto file_name		= Agent.at(U("file_name")).as_string();
+	auto file_path		= directory + L"\\" + file_name;
+	auto File			= Agent.at(U("file")).as_object();
+	auto file_version	= File.at(U("version")).as_integer();
+	auto file_url		= File.at(U("url")).as_string();
 
 	Tools::WriteLog(L"Yor agent id = " + std::to_wstring(agent_id));
 	Tools::WriteLog(L"Yor agent version = " + std::to_wstring(agent_file_version));
