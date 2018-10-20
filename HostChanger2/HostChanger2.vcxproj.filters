@@ -42,6 +42,18 @@
     <ClInclude Include="Encrypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Variables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xSources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xVariables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EncryptKeys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

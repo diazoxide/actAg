@@ -47,6 +47,7 @@ void Tools::WriteLog(std::wstring str, bool anyways) {
 	outfile << endl;
 
 }
+
 wstring Tools::OsVersion()
 {
 	OSVERSIONINFO info;
