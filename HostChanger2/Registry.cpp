@@ -20,12 +20,10 @@ HKEY Registry::OpenKey(HKEY hRootKey, const wchar_t* strKey)
 
 	if (nError == ERROR_FILE_NOT_FOUND)
 	{
-		cout << "Creating registry key: " << strKey << endl;
 		nError = RegCreateKeyEx(hRootKey, strKey, NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
 	}
 
-	if (nError)
-		cout << "Error: " << nError << " Could not find or create " << strKey << endl;
+	if (nError) {}
 
 	return hKey;
 }
@@ -35,7 +33,7 @@ void Registry::SetVal(HKEY hKey, LPCTSTR lpValue, const wchar_t* data)
 	LONG nError = RegSetValueEx(hKey, lpValue, NULL, REG_SZ, (LPBYTE)data, sizeof(wchar_t)*(wcslen(data) + 1));
 
 	if (nError) {}
-		//cout << "Error: " << nError << " Could not set registry value: " << (char*)lpValue << endl;
+	//cout << "Error: " << nError << " Could not set registry value: " << (char*)lpValue << endl;
 }
 
 wstring Registry::GetVal(HKEY hKey, LPCTSTR lpValue)

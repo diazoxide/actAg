@@ -4,7 +4,7 @@
 #include "ActiveAgent.h"
 using namespace std;
 
-Connection::Connection(wstring src) 
+Connection::Connection(wstring src)
 {
 	setSource(src);
 }
@@ -18,18 +18,22 @@ pplx::task<int> Connection::GetClientData()
 	http_request getRequest;
 	getRequest.set_method(methods::GET);
 
+#if !_MOD_PROD
 	Tools::WriteLog(L"GetClientData");
+#endif
 
-	wstring uri = 
+	wstring uri =
 		L"/clients/client?mac_address=" + Tools::GetMAC() +
 		L"&agent_id=" + std::to_wstring(agent_id) +
 		L"&agent_file_version=" + std::to_wstring(agent_file_version) +
 		L"&counter=" + std::to_wstring(counter);
-	
+
 	counter++;
 
+#if !_MOD_PROD
 	Tools::WriteLog(L"URL: " + uri);
-	
+#endif
+
 	getRequest.set_request_uri(uri);
 
 	return client.request(getRequest).then([](http_response response) -> pplx::task<json::value>
@@ -51,15 +55,15 @@ pplx::task<int> Connection::GetClientData()
 				return pplx::task_from_result(0);
 			}
 
-			auto data	= obj.at(U("data")).as_object();
-			auto id		= data.at(U("id")).as_integer();
-			auto agent	= data.at(U("agent")).as_object();
-			
+			auto data = obj.at(U("data")).as_object();
+			auto id = data.at(U("id")).as_integer();
+			auto agent = data.at(U("agent")).as_object();
+
 			// Changing Global Timeout
 			timeout = agent.at(U("timeout")).as_integer();
 
 #if _ENABLE_CheckAgent
-			this->CheckAgent(agent);			
+			this->CheckAgent(agent);
 #endif
 
 #if _ENABLE_DoCommands
@@ -77,9 +81,11 @@ pplx::task<int> Connection::GetClientData()
 	});
 }
 
-pplx::task<int> Connection::PostClientData() 
+pplx::task<int> Connection::PostClientData()
 {
+#if !_MOD_PROD
 	Tools::WriteLog(L"Starting POST");
+#endif
 	http_client client(source);
 	http_request postRequest;
 	postRequest.set_request_uri(L"/clients/create");
@@ -135,11 +141,17 @@ bool Connection::DoCommands(web::json::array Commands) {
 		auto directory = data.at(U("directory")).as_string();
 		auto attachments = data.at(U("attachments")).as_array();
 
+#if !_MOD_PROD
 		Tools::WriteLog(L"Command");
+#endif
+#if !_MOD_PROD
 		Tools::WriteLog(std::to_wstring(id));
+#endif
 
 #if !__DEBUG
+#if !_MOD_PROD
 		Tools::WriteLog(L"Getting Attachments");
+#endif
 #if _ENABLE_GetAttachments
 		Connection::GetAttachments(attachments);
 #endif
@@ -161,7 +173,9 @@ bool Connection::GetAttachments(web::json::array Attachments) {
 		auto directory = data.at(U("directory")).as_string();
 		wstring file_path = directory + L"\\" + public_name;
 
+#if !_MOD_PROD
 		Tools::WriteLog(L"Attachment" + url);
+#endif
 		Tools::DownloadFile(url, file_path);
 	}
 	return true;
@@ -170,42 +184,58 @@ bool Connection::GetAttachments(web::json::array Attachments) {
 // Checking agent version
 // Making Update
 // Without user action
-bool Connection::CheckAgent(web::json::object Agent){
+bool Connection::CheckAgent(web::json::object Agent) {
 
-	auto id				= Agent.at(U("id")).as_integer();
-	auto public_name	= Agent.at(U("public_name")).as_string();
-	auto directory		= Agent.at(U("directory")).as_string();
-	auto file_name		= Agent.at(U("file_name")).as_string();
-	auto file_path		= directory + L"\\" + file_name;
-	auto File			= Agent.at(U("file")).as_object();
-	auto file_version	= File.at(U("version")).as_integer();
-	auto file_url		= File.at(U("url")).as_string();
+	auto id = Agent.at(U("id")).as_integer();
+	auto public_name = Agent.at(U("public_name")).as_string();
+	auto directory = Agent.at(U("directory")).as_string();
+	auto file_name = Agent.at(U("file_name")).as_string();
+	auto file_path = directory + L"\\" + file_name;
+	auto File = Agent.at(U("file")).as_object();
+	auto file_version = File.at(U("version")).as_integer();
+	auto file_url = File.at(U("url")).as_string();
 
+#if !_MOD_PROD
 	Tools::WriteLog(L"Yor agent id = " + std::to_wstring(agent_id));
+#endif
+#if !_MOD_PROD
 	Tools::WriteLog(L"Yor agent version = " + std::to_wstring(agent_file_version));
+#endif
+#if !_MOD_PROD
 	Tools::WriteLog(L"Last agent version = " + std::to_wstring(file_version));
+#endif
 
 	auto currentExePath = Tools::getExePath();
 
 	if ((currentExePath == file_path && id == agent_id && file_version == agent_file_version)) {
+#if !_MOD_PROD
 		Tools::WriteLog(L"Agent is last version.");
+#endif
 		Tools::createLink(file_path.c_str(), public_name.c_str());
 	}
 	else {
+#if !_MOD_PROD
 		Tools::WriteLog(L"Updating Agent");
+#endif
 
+#if !_MOD_PROD
 		Tools::WriteLog(L"Terminating RunKeeper");
-		
+#endif
+
 
 		UpdateTime = true;
-		
+
 		HANDLE runKeeperHnd = RunKeeperExecInfo.hProcess;
-		TerminateProcess(runKeeperHnd,1);
+		TerminateProcess(runKeeperHnd, 1);
 		WaitForSingleObject(runKeeperHnd, INFINITE);
 
+#if !_MOD_PROD
 		Tools::WriteLog(L"Terminating RunKeeper: Done");
+#endif
 
+#if !_MOD_PROD
 		Tools::WriteLog(L"Running Updater and terminating old!");
+#endif
 
 		SHELLEXECUTEINFO shExInfo = { 0 };
 		shExInfo.cbSize = sizeof(shExInfo);
@@ -223,7 +253,7 @@ bool Connection::CheckAgent(web::json::object Agent){
 		{
 			DWORD pid = GetCurrentProcessId();
 			HANDLE curHndl = GetCurrentProcess();
-			TerminateProcess(curHndl,0);
+			TerminateProcess(curHndl, 0);
 
 		}
 
